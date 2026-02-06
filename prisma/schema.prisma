@@ -1,0 +1,171 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+  extensions = [citext]
+}
+
+enum UserStatus {
+  activated
+  suspended
+  pending_deletion
+}
+
+enum PostStatus {
+  draft
+  published
+  pending_deletion
+}
+
+enum NeighborStatus {
+  discovered
+  friend
+}
+
+model Users {
+  id BigInt @id @default(autoincrement())
+  status UserStatus @default(activated)
+  deleted_at DateTime? @db.Timestamptz
+  email String @unique @db.Citext
+  password String
+  nickname String
+  created_at DateTime @db.Timestamptz @default(now())
+  updated_at DateTime @db.Timestamptz @updatedAt
+  comments Comments[]
+  likes Likes[]
+  blog Blogs?
+}
+
+model Tags {
+  id BigInt @id @default(autoincrement())
+  name String @db.VarChar(50) @unique
+  created_at DateTime @db.Timestamptz @default(now())
+  post_tags Post_tags[]
+  @@index([name], name: "idx_tag_name")
+}
+
+model Blogs {
+  id BigInt @id @default(autoincrement())
+  user_id BigInt @unique
+  title String @db.VarChar(100)
+  url_slug String @db.VarChar(50) @unique
+  description String? @db.VarChar(200)
+  profile_img String @db.VarChar(500)
+  created_at DateTime @db.Timestamptz @default(now())
+  updated_at DateTime @db.Timestamptz @updatedAt
+  user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  categories Categories[]
+  posts Posts[]
+  from_blog_id Neighbors[] @relation("FromBlogs")
+  to_blog_id Neighbors[] @relation("ToBlogs")
+}
+
+model Categories {
+  id BigInt @id @default(autoincrement())
+  blog_id BigInt
+  parent_id BigInt?
+  name String @db.VarChar(50)
+  type String @db.VarChar(20) @default("default")
+  is_representative Boolean @default(false)
+  order_index Int @default(0)
+  created_at DateTime @db.Timestamptz @default(now())
+  blogs Blogs @relation(fields: [blog_id], references: [id], onDelete: Cascade)
+  parent Categories? @relation("SubCategory", fields: [parent_id], references: [id], onDelete: Cascade)
+  children Categories[] @relation("SubCategory")
+  posts Posts[]
+}
+
+model Neighbors {
+  id BigInt @id @default(autoincrement())
+  from_blog_id BigInt
+  to_blog_id BigInt
+  status NeighborStatus @default(discovered)
+  created_at DateTime @db.Timestamptz @default(now())
+  updated_at DateTime @db.Timestamptz @updatedAt
+  from_blogs Blogs @relation("FromBlogs", fields: [from_blog_id], references: [id], onDelete: Cascade)
+  to_blogs Blogs @relation("ToBlogs", fields: [to_blog_id], references: [id], onDelete: Cascade)
+  @@unique([from_blog_id, to_blog_id], name: "unique_neighbor")
+  @@index([from_blog_id], name: "idx_from_blog")
+  @@index([status], name: "idx_status_neighbors")
+}
+
+model Posts {
+  id BigInt @id @default(autoincrement())
+  blog_id BigInt
+  category_id BigInt?
+  title String @db.VarChar(200)
+  content String @db.Text
+  status PostStatus @default(draft)
+  view_count Int @default(0)
+  created_at DateTime @db.Timestamptz @default(now())
+  updated_at DateTime @db.Timestamptz @updatedAt
+  published_at DateTime? @db.Timestamptz
+  blogs Blogs @relation(fields: [blog_id], references: [id], onDelete: Cascade)
+  categories Categories? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  post_tags Post_tags[]
+  post_images Post_images[]
+  comments Comments[]
+  likes Likes[]
+  @@index([status], name: "idx_status_posts")
+  @@index([published_at], name: "idx_published_at")
+  @@index([blog_id, status], name: "idx_blog_status")
+}
+
+model Post_tags {
+  id BigInt @id @default(autoincrement())
+  post_id BigInt
+  tag_id BigInt
+  created_at DateTime @db.Timestamptz @default(now())
+  posts Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  tags Tags @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  @@unique([post_id, tag_id], name: "unique_post_tag")
+}
+
+model Post_images {
+  id BigInt @id @default(autoincrement())
+  post_id BigInt
+  image_path String @db.VarChar(500)
+  alt_text String? @db.VarChar(200)
+  order_index Int @default(0)
+  created_at DateTime @db.Timestamptz @default(now())
+  posts Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
+}
+
+model Comments {
+  id BigInt @id @default(autoincrement())
+  post_id BigInt
+  user_id BigInt?
+  parent_id BigInt?
+  is_deleted Boolean @default(false)
+  deleted_reason String? @db.VarChar(50)
+  content String @db.Text
+  created_at DateTime @db.Timestamptz @default(now())
+  updated_at DateTime @db.Timestamptz @updatedAt
+  posts Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  users Users? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  parents Comments? @relation("CommentsToComment", fields: [parent_id], references: [id], onDelete: Cascade)
+  children Comments[] @relation("CommentsToComment")
+  @@index([post_id], name: "idx_post")
+}
+
+model Likes {
+  id BigInt @id @default(autoincrement())
+  post_id BigInt
+  user_id BigInt
+  created_at DateTime @db.Timestamptz @default(now())
+  posts Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  users Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  @@unique([post_id, user_id], name: "unique_like")
+}
