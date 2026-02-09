@@ -109,6 +109,7 @@ model Posts {
   category_id BigInt?
   title String @db.VarChar(200)
   content String @db.Text
+  representative_image_id Int? @default(0)
   status PostStatus @default(draft)
   view_count Int @default(0)
   created_at DateTime @db.Timestamptz @default(now())
