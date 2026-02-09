@@ -39,8 +39,11 @@ model Users {
   status UserStatus @default(activated)
   deleted_at DateTime? @db.Timestamptz
   email String @unique @db.Citext
+  birthdate DateTime? @db.Date
   password String
-  nickname String
+  name String @db.VarChar(100)
+  nickname String @db.VarChar(50) @unique
+  profile_img String? @db.VarChar(500)
   created_at DateTime @db.Timestamptz @default(now())
   updated_at DateTime @db.Timestamptz @updatedAt
   comments Comments[]
@@ -62,7 +65,6 @@ model Blogs {
   title String @db.VarChar(100)
   url_slug String @db.VarChar(50) @unique
   description String? @db.VarChar(200)
-  profile_img String @db.VarChar(500)
   created_at DateTime @db.Timestamptz @default(now())
   updated_at DateTime @db.Timestamptz @updatedAt
   user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)

@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+// @ts-ignore: BigInt를 JSON으로 직렬화할 때 문자열로 변환
+BigInt.prototype.toJSON = function () {
+  return this.toString();
+};
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
