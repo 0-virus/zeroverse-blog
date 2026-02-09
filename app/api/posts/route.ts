@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 // 또는 상대경로: import { prisma } from '../../../lib/prisma';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     // URL에서 쿼리 파라미터 가져오기
     const { searchParams } = new URL(request.url);
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       skip: skip,
       take: limit,
       include: {
-        blogs: {
+        blog: {
           select: {
             title: true,
             url_slug: true,
@@ -31,12 +31,12 @@ export async function GET(request: Request) {
             },
           },
         },
-        categories: {
+        category: {
           select: { name: true },
         },
         post_tags: {
           include: {
-            tags: { select: { name: true } },
+            tag: { select: { name: true } },
           },
         },
       },
@@ -49,13 +49,13 @@ export async function GET(request: Request) {
       status: post.status,
       viewCount: post.view_count,
       publishedAt: post.published_at,
-      author: post.blogs.user.nickname,
+      author: post.blog.user.nickname,
       blog: {
-        title: post.blogs.title,
-        slug: post.blogs.url_slug,
+        title: post.blog.title,
+        slug: post.blog.url_slug,
       },
-      category: post.categories?.name || "미분류",
-      tags: post.post_tags.map((pt) => pt.tags.name),
+      category: post.category?.name || "미분류",
+      tags: post.post_tags.map((pt) => pt.tag.name),
     }));
 
     return NextResponse.json({

@@ -70,8 +70,8 @@ model Blogs {
   user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
   categories Categories[]
   posts Posts[]
-  from_blog_id Neighbors[] @relation("FromBlogs")
-  to_blog_id Neighbors[] @relation("ToBlogs")
+  from_blog_ids Neighbors[] @relation("FromBlog")
+  to_blog_ids Neighbors[] @relation("ToBlog")
 }
 
 model Categories {
@@ -83,7 +83,7 @@ model Categories {
   is_representative Boolean @default(false)
   order_index Int @default(0)
   created_at DateTime @db.Timestamptz @default(now())
-  blogs Blogs @relation(fields: [blog_id], references: [id], onDelete: Cascade)
+  blog Blogs @relation(fields: [blog_id], references: [id], onDelete: Cascade)
   parent Categories? @relation("SubCategory", fields: [parent_id], references: [id], onDelete: Cascade)
   children Categories[] @relation("SubCategory")
   posts Posts[]
@@ -96,8 +96,8 @@ model Neighbors {
   status NeighborStatus @default(discovered)
   created_at DateTime @db.Timestamptz @default(now())
   updated_at DateTime @db.Timestamptz @updatedAt
-  from_blogs Blogs @relation("FromBlogs", fields: [from_blog_id], references: [id], onDelete: Cascade)
-  to_blogs Blogs @relation("ToBlogs", fields: [to_blog_id], references: [id], onDelete: Cascade)
+  from_blog Blogs @relation("FromBlog", fields: [from_blog_id], references: [id], onDelete: Cascade)
+  to_blog Blogs @relation("ToBlog", fields: [to_blog_id], references: [id], onDelete: Cascade)
   @@unique([from_blog_id, to_blog_id], name: "unique_neighbor")
   @@index([from_blog_id], name: "idx_from_blog")
   @@index([status], name: "idx_status_neighbors")
@@ -115,8 +115,8 @@ model Posts {
   created_at DateTime @db.Timestamptz @default(now())
   updated_at DateTime @db.Timestamptz @updatedAt
   published_at DateTime? @db.Timestamptz
-  blogs Blogs @relation(fields: [blog_id], references: [id], onDelete: Cascade)
-  categories Categories? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  blog Blogs @relation(fields: [blog_id], references: [id], onDelete: Cascade)
+  category Categories? @relation(fields: [category_id], references: [id], onDelete: SetNull)
   post_tags Post_tags[]
   post_images Post_images[]
   comments Comments[]
@@ -131,8 +131,8 @@ model Post_tags {
   post_id BigInt
   tag_id BigInt
   created_at DateTime @db.Timestamptz @default(now())
-  posts Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
-  tags Tags @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  post Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  tag Tags @relation(fields: [tag_id], references: [id], onDelete: Cascade)
   @@unique([post_id, tag_id], name: "unique_post_tag")
 }
 
@@ -143,7 +143,7 @@ model Post_images {
   alt_text String? @db.VarChar(200)
   order_index Int @default(0)
   created_at DateTime @db.Timestamptz @default(now())
-  posts Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  post Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
 }
 
 model Comments {
@@ -156,9 +156,9 @@ model Comments {
   content String @db.Text
   created_at DateTime @db.Timestamptz @default(now())
   updated_at DateTime @db.Timestamptz @updatedAt
-  posts Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
-  users Users? @relation(fields: [user_id], references: [id], onDelete: SetNull)
-  parents Comments? @relation("CommentsToComment", fields: [parent_id], references: [id], onDelete: Cascade)
+  post Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  user Users? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  parent Comments? @relation("CommentsToComment", fields: [parent_id], references: [id], onDelete: Cascade)
   children Comments[] @relation("CommentsToComment")
   @@index([post_id], name: "idx_post")
 }
@@ -168,7 +168,7 @@ model Likes {
   post_id BigInt
   user_id BigInt
   created_at DateTime @db.Timestamptz @default(now())
-  posts Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
-  users Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  post Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
   @@unique([post_id, user_id], name: "unique_like")
 }
