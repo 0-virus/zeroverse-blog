@@ -86,14 +86,11 @@ export async function GET(req: NextRequest) {
       writer_nickname: post.blog,
     }));
 
-    // BigInt를 처리하기 위해 JSON 직렬화 시 변환 로직을 추가합니다.
-    const serializedPosts = JSON.parse(
-      JSON.stringify(latestPosts, (key, value) =>
-        typeof value === "bigint" ? value.toString() : value,
-      ),
-    );
-
-    return NextResponse.json(serializedPosts, { status: 200 });
+    return NextResponse.json({
+      success: true,
+      status: 200,
+      posts: formattedFeed,
+    });
   } catch (error) {
     console.error("Error fetching universe feed:", error);
     return NextResponse.json(
