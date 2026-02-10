@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { NextAuthOptions } from "next-auth";
 import { PrismaClient } from "@/app/generated/prisma";
 import bcrypt from "bcryptjs";
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 

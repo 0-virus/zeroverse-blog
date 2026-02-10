@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
+import { authOptions } from "../auth/[...nextauth]/route";
 // 또는 상대경로: import { prisma } from '../../../lib/prisma';
 
 export async function GET(request: NextRequest) {
@@ -72,6 +74,80 @@ export async function GET(request: NextRequest) {
     console.error("게시글 조회 에러: ", error);
     return NextResponse.json(
       { success: false, error: "게시글을 불러오는데 실패했습니다." },
+      { status: 500 },
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    // 세션 데이터 불러오기
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { message: "로그인이 필요합니다." },
+        { status: 401 },
+      );
+    }
+
+    const blog = await prisma.blogs.findUnique({
+      where: {
+        user_id: Number(session.user.id),
+      },
+    });
+    if (!blog) {
+      return NextResponse.json(
+        { message: "블로그 정보가 없습니다." },
+        { status: 400 },
+      );
+    }
+    const blogId = blog.id;
+
+    // Request Body 불러오기
+    const body = await request.json();
+    if (!body) {
+      return NextResponse.json(
+        { message: "Invalid request body" },
+        { status: 400 },
+      );
+    }
+    const { categoryId, title, content, representativeImageId, status } = body;
+    let publishedAt = null;
+    if (status === "published") {
+      publishedAt = new Date();
+    }
+    // 필수 값 확인
+    if (!title || !content) {
+      return NextResponse.json(
+        { message: "필수 항목(제목, 내용)이 누락되었습니다." },
+        { status: 400 },
+      );
+    }
+
+    // 포스트 생성
+    const post = await prisma.posts.create({
+      data: {
+        category_id: categoryId,
+        title,
+        content,
+        representative_image_id: representativeImageId,
+        status,
+        blog_id: Number(blogId),
+        published_at: publishedAt,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        message: "포스팅에 성공했습니다.",
+        post,
+      },
+      { status: 201 },
+    );
+  } catch (error: any) {
+    console.error(error);
+    return NextResponse.json(
+      { message: "포스팅에 실패했습니다." },
       { status: 500 },
     );
   }
