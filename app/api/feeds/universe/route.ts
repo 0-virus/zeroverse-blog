@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     if (!session || !session.user) {
       return NextResponse.json(
         { message: "로그인이 필요합니다." },
-        { status: 400 },
+        { status: 401 },
       );
     }
 
