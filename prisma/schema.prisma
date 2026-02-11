@@ -79,9 +79,9 @@ model Categories {
   blog_id BigInt
   parent_id BigInt?
   name String @db.VarChar(50)
-  type String @db.VarChar(20) @default("default")
+  type String? @db.VarChar(20) @default("default")
   is_representative Boolean @default(false)
-  order_index Int @default(0)
+  order_index Int
   created_at DateTime @db.Timestamptz @default(now())
   blog Blogs @relation(fields: [blog_id], references: [id], onDelete: Cascade)
   parent Categories? @relation("SubCategory", fields: [parent_id], references: [id], onDelete: Cascade)
