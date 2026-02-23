@@ -3,6 +3,87 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ postId: string }> },
+) {
+  try {
+    // URL에서 쿼리 파라미터 가져오기
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "5");
+    const skip = (page - 1) * limit;
+
+    // Path Parameter 불러오기
+    const { postId } = await params;
+    if (!postId) {
+      return NextResponse.json(
+        { message: "Path Parameter가 유효하지 않습니다." },
+        { status: 400 },
+      );
+    }
+
+    // 표시할 게시물 불러오기
+    const post = await prisma.posts.findUnique({
+      where: { id: BigInt(postId) },
+      include: { likes: true, comments: true },
+    });
+    if (!post) {
+      return NextResponse.json(
+        { message: "게시물이 존재하지 않습니다." },
+        { status: 400 },
+      );
+    }
+
+    // 게시물 목록, 개수 불러오기
+    // 카테고리 미분류시 전체 글을 불러옵니다.
+    const [totalCount, postList] = await Promise.all([
+      prisma.posts.count({
+        where: post.category_id
+          ? {
+              status: "published",
+              blog_id: post.blog_id,
+              category_id: BigInt(post.category_id),
+            }
+          : { status: "published", blog_id: post.blog_id },
+      }),
+      prisma.posts.findMany({
+        where: post.category_id
+          ? { blog_id: post.blog_id, category_id: BigInt(post.category_id) }
+          : { blog_id: post.blog_id },
+        orderBy: { published_at: "desc" },
+        skip: skip,
+        take: limit,
+        include: {
+          _count: {
+            select: { comments: true },
+          },
+        },
+      }),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      post,
+      postList: {
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPage: Math.ceil(totalCount / limit),
+        },
+        data: postList,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { message: "게시물 조회 실패..." },
+      { status: 500 },
+    );
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ postId: string }> },
@@ -27,11 +108,11 @@ export async function PUT(
     }
     const { categoryId, title, content, representativeImageId, status } = body;
 
-    // URL 파라미터 불러오기
+    // Path Parameter 불러오기
     const { postId } = await params;
     if (!postId) {
       return NextResponse.json(
-        { message: "잘못된 요청입니다." },
+        { message: "Path Parameter가 유효하지 않습니다." },
         { status: 400 },
       );
     }
