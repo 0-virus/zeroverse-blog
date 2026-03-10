@@ -43,8 +43,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const fromattedPosts = posts.map((post) => ({
-      id: post.id.toString(),
+    const formattedPosts = posts.map((post) => ({
+      id: post.id,
       title: post.title,
       content: post.content.substring(0, 200) + "...",
       status: post.status,
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
         totalCount,
         totalPages: Math.ceil(totalCount / limit),
       },
-      posts: fromattedPosts,
+      posts: formattedPosts,
     });
   } catch (error) {
     console.error("게시글 조회 에러: ", error);
