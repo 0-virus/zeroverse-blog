@@ -49,6 +49,8 @@ model Users {
   comments Comments[]
   likes Likes[]
   blog Blogs?
+  notifications_received  Notifications[] @relation("ReceivedNotifications")
+  notifications_triggered Notifications[] @relation("TriggeredNotifications")
 }
 
 model Tags {
@@ -171,4 +173,30 @@ model Likes {
   post Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
   user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
   @@unique([post_id, user_id], name: "unique_like")
+}
+
+enum NotificationType {
+  COMMENT     // 내 글에 달린 댓글
+  LIKE        // 내 글에 달린 공감
+  REPLY       // 내 댓글에 달린 대댓글
+  NEIGHBOR    // 누군가 나를 이웃으로 추가
+}
+
+model Notifications {
+  id              BigInt           @id @default(autoincrement())
+  user_id         BigInt           // 알림을 받을 사용자 ID (글 작성자)
+  actor_id        BigInt           // 알림을 발생시킨 사용자 ID (댓글/공감을 남긴 사람)
+  type            NotificationType // 알림 종류 (댓글, 공감 등)
+  target_url      String           @db.VarChar(500) // 알림 클릭 시 이동할 URL (예: /post/123#comment-45)
+  message         String           @db.VarChar(200) // 알림 내용
+  is_read         Boolean          @default(false)  // 읽음 여부
+  created_at      DateTime         @db.Timestamptz @default(now())
+  
+  // Relations
+  user            Users            @relation("ReceivedNotifications", fields: [user_id], references: [id], onDelete: Cascade)
+  actor           Users            @relation("TriggeredNotifications", fields: [actor_id], references: [id], onDelete: Cascade)
+
+  // 조회가 빈번하므로 수신자 기반 인덱스 추가
+  @@index([user_id, is_read], name: "idx_user_unread_notifications")
+  @@index([created_at], name: "idx_notifications_created_at")
 }
