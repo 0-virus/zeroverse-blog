@@ -33,7 +33,7 @@ export async function GET({ params }: { params: Promise<{ blogId: string }> }) {
       categories: fromattedCategories,
     });
   } catch (error) {
-    console.error("카테고리 조회 에러: ", error);
+    console.error("Error fetching categories: ", error);
     return NextResponse.json(
       { success: false, error: "카테고리를 불러오는데 실패했습니다." },
       { status: 500 },
