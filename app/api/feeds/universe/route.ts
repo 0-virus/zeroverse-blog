@@ -1,20 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/app/generated/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { now } from "next-auth/client/_utils";
+import { prisma } from "@/lib/prisma";
 
-// PrismaClient 인스턴스를 생성합니다.
-// 개발 중에는 핫 리로딩으로 인해 여러 인스턴스가 생성되는 것을 방지하기 위해 전역 객체를 사용합니다.
-declare global {
-  var prisma: PrismaClient | undefined;
-}
-
-const prisma = global.prisma || new PrismaClient();
-
-if (process.env.NODE_ENV === "development") global.prisma = prisma;
-
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
@@ -37,7 +26,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 쿼리 파라미터에서 limit을 가져오거나 기본값 10을 사용합니다.
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
 
     // 최신 게시글을 가져옵니다.
@@ -93,12 +82,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching universe feed:", error);
-    return NextResponse.json(
-      {
-        message: "Failed to fetch universe feed",
-        error: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ message: "피드 조회 실패..." }, { status: 500 });
   }
 }
