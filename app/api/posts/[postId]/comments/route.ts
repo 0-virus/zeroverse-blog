@@ -75,7 +75,7 @@ export async function POST(
       }
       notification = await prisma.notifications.create({
         data: {
-          user_id: BigInt(post.blog.user_id),
+          user_id: post.blog.user_id,
           actor_id: BigInt(session.user.id),
           type: "COMMENT",
           target_url: `/${postId}`,
@@ -97,9 +97,20 @@ export async function POST(
         );
       }
 
+      // 부모 댓글 작성자가 없는 경우 (탈퇴한 회원 등) 알림 생성 생략하고 바로 성공 응답
+      if (!parentComment.user_id) {
+        return NextResponse.json(
+          {
+            message: "댓글 생성 성공! (알림 발송 대상 없음)",
+            commentId: comment.id.toString(),
+          },
+          { status: 201 },
+        );
+      }
+
       notification = await prisma.notifications.create({
         data: {
-          user_id: Number(parentComment.user_id),
+          user_id: BigInt(parentComment.user_id),
           actor_id: BigInt(session.user.id),
           type: "REPLY",
           target_url: `/${postId}`,
@@ -107,18 +118,11 @@ export async function POST(
         },
       });
     }
-    if (!notification) {
-      return NextResponse.json(
-        { message: "댓글 생성 실패..." },
-        { status: 500 },
-      );
-    }
 
     return NextResponse.json(
       {
         message: "댓글 생성 성공!",
-        comment,
-        notification,
+        commentId: comment.id.toString(),
       },
       { status: 201 },
     );
