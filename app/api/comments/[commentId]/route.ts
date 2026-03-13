@@ -55,7 +55,7 @@ export async function PUT(
       );
     }
 
-    // 게시물 수정
+    // 댓글 수정
     const comment = await prisma.comments.update({
       where: { id: BigInt(commentId) },
       data: {
@@ -68,10 +68,7 @@ export async function PUT(
       { status: 200 },
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { message: "게시물 수정 실패..." },
-      { status: 500 },
-    );
+    return NextResponse.json({ message: "댓글 수정 실패..." }, { status: 500 });
   }
 }
 
