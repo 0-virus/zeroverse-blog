@@ -79,7 +79,7 @@ export async function POST(
           actor_id: BigInt(session.user.id),
           type: "COMMENT",
           target_url: `/${postId}`,
-          message: `${session.user.id}님이 ${post.title}에 댓글을 남겼습니다.`,
+          message: `${session.user.id}님이 ${post.title}에 댓글을 남겼습니다.\n"${comment.content}"`,
         },
       });
     } else {
@@ -114,7 +114,7 @@ export async function POST(
           actor_id: BigInt(session.user.id),
           type: "REPLY",
           target_url: `/${postId}`,
-          message: `${session.user.id}님이 회원님의 댓글에 답장했습니다.`,
+          message: `${session.user.nickname}님이 회원님의 댓글에 답장했습니다.\n"${comment.content}"`,
         },
       });
     }
@@ -123,6 +123,7 @@ export async function POST(
       {
         message: "댓글 생성 성공!",
         commentId: comment.id.toString(),
+        notificationId: notification.id.toString(),
       },
       { status: 201 },
     );
