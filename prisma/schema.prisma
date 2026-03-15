@@ -29,11 +29,6 @@ enum PostStatus {
   pending_deletion
 }
 
-enum NeighborStatus {
-  discovered
-  friend
-}
-
 model Users {
   id BigInt @id @default(autoincrement())
   status UserStatus @default(activated)
@@ -95,14 +90,12 @@ model Neighbors {
   id BigInt @id @default(autoincrement())
   from_blog_id BigInt
   to_blog_id BigInt
-  status NeighborStatus @default(discovered)
   created_at DateTime @db.Timestamptz @default(now())
   updated_at DateTime @db.Timestamptz @updatedAt
   from_blog Blogs @relation("FromBlog", fields: [from_blog_id], references: [id], onDelete: Cascade)
   to_blog Blogs @relation("ToBlog", fields: [to_blog_id], references: [id], onDelete: Cascade)
   @@unique([from_blog_id, to_blog_id], name: "unique_neighbor")
   @@index([from_blog_id], name: "idx_from_blog")
-  @@index([status], name: "idx_status_neighbors")
 }
 
 model Posts {
