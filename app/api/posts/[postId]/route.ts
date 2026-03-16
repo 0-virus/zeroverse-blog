@@ -163,7 +163,10 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({ message: "게시물 수정에 성공했습니다.", post });
+    return NextResponse.json(
+      { message: "게시물 수정에 성공했습니다.", post },
+      { status: 200 },
+    );
   } catch (error: any) {
     return NextResponse.json(
       { message: "게시물 수정에 실패했습니다." },
