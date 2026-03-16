@@ -40,8 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# prettier options
-.prettierrc
-
 # Prisma Client
 /app/generated/prisma
