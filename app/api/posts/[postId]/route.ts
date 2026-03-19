@@ -31,7 +31,7 @@ export async function GET(
     if (!post) {
       return NextResponse.json(
         { message: "게시물이 존재하지 않습니다." },
-        { status: 400 },
+        { status: 404 },
       );
     }
 
