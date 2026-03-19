@@ -222,13 +222,10 @@ export async function DELETE(
       where: { id: Number(postId) },
     });
 
-    return NextResponse.json(
-      { message: "게시물 삭제가 완료되었습니다." },
-      { status: 200 },
-    );
+    return NextResponse.json({ message: "게시물 삭제 완료!" }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
-      { message: "게시물 삭제에 실패했습니다." },
+      { message: "게시물 삭제 실패..." },
       { status: 500 },
     );
   }
