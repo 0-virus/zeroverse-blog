@@ -41,6 +41,61 @@ export async function GET({ params }: { params: Promise<{ blogId: string }> }) {
   }
 }
 
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ blogId: string }> },
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { message: "로그인이 필요합니다." },
+        { status: 401 },
+      );
+    }
+
+    const { blogId } = await params;
+    if (!blogId || isNaN(Number(blogId))) {
+      return NextResponse.json(
+        { message: "blogId가 유효하지 않습니다." },
+        { status: 400 },
+      );
+    }
+
+    const blog = await prisma.blogs.findUnique({
+      where: { id: BigInt(blogId) },
+    });
+    if (!blog) {
+      return NextResponse.json(
+        { message: "블로그가 존재하지 않습니다." },
+        { status: 404 },
+      );
+    }
+
+    const { categories } = await request.json();
+
+    await prisma.$transaction(
+      categories.map((category: { id: bigint; orderIndex: number }) =>
+        prisma.categories.update({
+          where: { id: BigInt(category.id) },
+          data: { order_index: category.orderIndex },
+        }),
+      ),
+    );
+
+    return NextResponse.json({
+      message: "카테고리 순서 변경 완료!",
+      blogId: Number(blogId),
+    });
+  } catch (error) {
+    console.error("Error updating category order: ", error);
+    return NextResponse.json(
+      { message: "카테고리 순서 변경 실패..." },
+      { status: 500 },
+    );
+  }
+}
+
 export async function POST({
   params,
 }: {
