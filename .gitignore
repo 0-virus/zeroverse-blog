@@ -22,6 +22,7 @@
 
 # misc
 .DS_Store
+.idea/
 *.pem
 
 # debug
@@ -39,9 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# prettier options
-.prettierrc
 
 # Prisma Client
 /app/generated/prisma

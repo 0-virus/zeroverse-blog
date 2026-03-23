@@ -1,8 +1,6 @@
-import { PrismaClient } from "@/app/generated/prisma";
 import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {
@@ -60,6 +58,7 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     } else {
+      console.error("[api/auth/signup] error: ", error);
       return NextResponse.json(
         { message: "Failed to create user", error: error.message },
         { status: 500 },
