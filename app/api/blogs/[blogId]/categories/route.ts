@@ -18,7 +18,7 @@ export async function GET({ params }: { params: Promise<{ blogId: string }> }) {
       orderBy: { order_index: "asc" },
     });
 
-    const fromattedCategories = categories.map((category) => ({
+    const formattedCategories = categories.map((category) => ({
       id: category.id,
       parent_id: category.parent_id,
       name: category.name,
@@ -30,7 +30,7 @@ export async function GET({ params }: { params: Promise<{ blogId: string }> }) {
 
     return NextResponse.json({
       success: true,
-      categories: fromattedCategories,
+      categories: formattedCategories,
     });
   } catch (error) {
     console.error("Error fetching categories: ", error);
@@ -114,9 +114,10 @@ export async function POST({
     // 블로그 정보 불러오기
     const { blogId } = await params;
     if (!blogId) {
-      return NextResponse.json({
-        message: "URL 파라미터가 유효하지 않습니다.",
-      });
+      return NextResponse.json(
+        { message: "URL 파라미터가 유효하지 않습니다." },
+        { status: 400 },
+      );
     }
 
     // 순서 설정
@@ -129,7 +130,7 @@ export async function POST({
     // 카테고리 생성
     const category = await prisma.categories.create({
       data: {
-        blog_id: Number(blogId),
+        blog_id: BigInt(blogId),
         name: "새 카테고리",
         order_index: orderIndex,
       },

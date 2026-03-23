@@ -120,7 +120,7 @@ export async function PUT(
     // 권한 확인 & 카테고리 검증
     const [existingPost, category] = await Promise.all([
       prisma.posts.findUnique({
-        where: { id: Number(postId) },
+        where: { id: BigInt(postId) },
         include: { blog: true },
       }),
       categoryId === null
@@ -153,7 +153,7 @@ export async function PUT(
 
     // 게시물 수정
     const post = await prisma.posts.update({
-      where: { id: Number(postId) },
+      where: { id: BigInt(postId) },
       data: {
         title: title,
         content: content,
@@ -200,7 +200,7 @@ export async function DELETE(
 
     // 권한 확인
     const existingPost = await prisma.posts.findUnique({
-      where: { id: Number(postId) },
+      where: { id: BigInt(postId) },
       include: { blog: true },
     });
     if (!existingPost) {
@@ -219,11 +219,12 @@ export async function DELETE(
 
     // 게시물 삭제
     await prisma.posts.delete({
-      where: { id: Number(postId) },
+      where: { id: BigInt(postId) },
     });
 
     return NextResponse.json({ message: "게시물 삭제 완료!" }, { status: 200 });
   } catch (error: any) {
+    console.error("[api/posts/:postId] error: ", error);
     return NextResponse.json(
       { message: "게시물 삭제 실패..." },
       { status: 500 },

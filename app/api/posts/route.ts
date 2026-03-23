@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     // 블로그 정보 불러오기
     const blog = await prisma.blogs.findUnique({
       where: {
-        user_id: Number(session.user.id),
+        user_id: BigInt(session.user.id),
       },
     });
     if (!blog) {
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
         content,
         representative_image_id: representativeImageId,
         status,
-        blog_id: Number(blogId),
+        blog_id: BigInt(blogId),
         published_at: publishedAt,
       },
     });

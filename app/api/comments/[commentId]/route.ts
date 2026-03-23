@@ -124,7 +124,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "댓글 삭제 완료!" }, { status: 200 });
   } catch (error: any) {
-    console.error(error);
+    console.error("[api/comments/:commentId] error: ", error);
     return NextResponse.json({ message: "댓글 삭제 실패..." }, { status: 500 });
   }
 }

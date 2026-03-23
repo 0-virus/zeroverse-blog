@@ -59,7 +59,7 @@ export async function POST(
         actor_id: BigInt(session.user.id),
         type: "LIKE",
         target_url: `/${postId}`,
-        message: `${session.user.id}님이 ${post.title}에 공감했습니다.`,
+        message: `${session.user.nickname}님이 ${post.title}에 공감했습니다.`,
       },
     });
 

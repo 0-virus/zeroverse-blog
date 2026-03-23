@@ -15,14 +15,17 @@ export async function GET(request: NextRequest) {
 
     const myBlog = await prisma.blogs.findUnique({
       where: {
-        user_id: Number(session.user.id),
+        user_id: BigInt(session.user.id),
       },
       select: {
         id: true,
       },
     });
     if (!myBlog) {
-      return NextResponse.json("블로그 정보가 없습니다.", { status: 404 });
+      return NextResponse.json(
+        { message: "블로그 정보가 없습니다." },
+        { status: 404 },
+      );
     }
 
     // 쿼리 파라미터에서 limit을 가져오거나 기본값 10을 사용합니다.
@@ -72,7 +75,7 @@ export async function GET(request: NextRequest) {
       published_at: post.published_at,
       representative_image_id: post.representative_image_id,
       blog_title: post.blog.title,
-      writer_nickname: post.blog,
+      writer_nickname: post.blog.user.nickname,
     }));
 
     return NextResponse.json({

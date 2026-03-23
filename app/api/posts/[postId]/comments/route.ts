@@ -36,10 +36,22 @@ export async function POST(
     }
     const { parentId, content } = body;
 
-    // 필수 값 확인
-    if (parentId === undefined || !content) {
+    // 파라미터 유효성 검증
+    if (!content) {
       return NextResponse.json(
-        { message: "필수 항목(상위 댓글 ID, 내용)이 누락되었습니다." },
+        { message: "필수 항목(내용)이 누락되었습니다." },
+        { status: 400 },
+      );
+    }
+    if (parentId === undefined) {
+      return NextResponse.json(
+        { message: "필수 항목(상위 댓글 ID)이 누락되었습니다." },
+        { status: 400 },
+      );
+    }
+    if (isNaN(Number(parentId))) {
+      return NextResponse.json(
+        { message: "상위 댓글 ID 항목이 유효하지 않습니다." },
         { status: 400 },
       );
     }
@@ -49,7 +61,7 @@ export async function POST(
       data: {
         post_id: BigInt(postId),
         user_id: BigInt(session.user.id),
-        parent_id: parentId,
+        parent_id: parentId === null ? null : BigInt(parentId),
         content,
       },
     });
@@ -79,12 +91,12 @@ export async function POST(
           actor_id: BigInt(session.user.id),
           type: "COMMENT",
           target_url: `/${postId}`,
-          message: `${session.user.id}님이 ${post.title}에 댓글을 남겼습니다.\n"${comment.content}"`,
+          message: `${session.user.nickname}님이 ${post.title}에 댓글을 남겼습니다.\n"${comment.content}"`,
         },
       });
     } else {
       const parentComment = await prisma.comments.findUnique({
-        where: { id: parentId },
+        where: { id: BigInt(parentId) },
         select: {
           user_id: true,
         },

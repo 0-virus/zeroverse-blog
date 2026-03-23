@@ -38,7 +38,7 @@ export async function PUT(
 
     // 권한 확인
     const existingCategory = await prisma.categories.findUnique({
-      where: { id: Number(categoryId) },
+      where: { id: BigInt(categoryId) },
       include: { blog: true },
     });
 
@@ -58,7 +58,7 @@ export async function PUT(
 
     // 카테고리 수정
     const category = await prisma.categories.update({
-      where: { id: Number(categoryId) },
+      where: { id: BigInt(categoryId) },
       data: {
         name: name,
         type: type,
@@ -104,7 +104,7 @@ export async function DELETE(
 
     // 권한 확인
     const existingCategory = await prisma.categories.findUnique({
-      where: { id: Number(categoryId) },
+      where: { id: BigInt(categoryId) },
       include: { blog: true },
     });
     if (!existingCategory) {
@@ -123,7 +123,7 @@ export async function DELETE(
 
     // 게시물 삭제
     await prisma.categories.delete({
-      where: { id: Number(categoryId) },
+      where: { id: BigInt(categoryId) },
     });
 
     return NextResponse.json(
@@ -131,6 +131,7 @@ export async function DELETE(
       { status: 200 },
     );
   } catch (error: any) {
+    console.error("[api/categories/:categoryId] error: ", error);
     return NextResponse.json(
       { message: "카테고리 삭제에 실패했습니다." },
       { status: 500 },
