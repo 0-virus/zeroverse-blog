@@ -3,7 +3,10 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function GET({ params }: { params: Promise<{ blogId: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ blogId: string }> },
+) {
   try {
     const { blogId } = await params;
     if (!blogId) {
@@ -96,11 +99,10 @@ export async function PUT(
   }
 }
 
-export async function POST({
-  params,
-}: {
-  params: Promise<{ blogId: string }>;
-}) {
+export async function POST(
+  _request: NextRequest,
+  { params }: { params: Promise<{ blogId: string }> },
+) {
   try {
     // 세션 데이터 불러오기
     const session = await getServerSession(authOptions);
