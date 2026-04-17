@@ -3,6 +3,130 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ postId: string }> },
+) {
+  try {
+    // Path Parameter 불러오기
+    const { postId } = await params;
+    if (!postId || isNaN(Number(postId))) {
+      return NextResponse.json(
+        { message: "Path Parameter가 유효하지 않습니다." },
+        { status: 400 },
+      );
+    }
+
+    // 게시글 존재 확인
+    const postExists = await prisma.posts.findUnique({
+      where: { id: BigInt(postId) },
+      select: { id: true },
+    });
+    if (!postExists) {
+      return NextResponse.json(
+        { message: "게시물이 존재하지 않습니다." },
+        { status: 404 },
+      );
+    }
+
+    // 쿼리 파라미터
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const skip = (page - 1) * limit;
+
+    // 최상위 댓글 총 개수
+    const totalCount = await prisma.comments.count({
+      where: { post_id: BigInt(postId), parent_id: null },
+    });
+
+    // 최상위 댓글 + 대댓글 2단계 조회
+    const comments = await prisma.comments.findMany({
+      where: { post_id: BigInt(postId), parent_id: null },
+      orderBy: { created_at: "asc" },
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        content: true,
+        is_deleted: true,
+        created_at: true,
+        updated_at: true,
+        user: {
+          select: {
+            id: true,
+            nickname: true,
+            profile_img: true,
+          },
+        },
+        children: {
+          orderBy: { created_at: "asc" },
+          select: {
+            id: true,
+            content: true,
+            is_deleted: true,
+            created_at: true,
+            updated_at: true,
+            user: {
+              select: {
+                id: true,
+                nickname: true,
+                profile_img: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const formattedComments = comments.map((c) => ({
+      id: c.id.toString(),
+      content: c.is_deleted ? null : c.content,
+      isDeleted: c.is_deleted,
+      createdAt: c.created_at,
+      updatedAt: c.updated_at,
+      user: c.user
+        ? {
+            id: c.user.id.toString(),
+            nickname: c.user.nickname,
+            profileImg: c.user.profile_img,
+          }
+        : null,
+      children: c.children.map((r) => ({
+        id: r.id.toString(),
+        content: r.is_deleted ? null : r.content,
+        isDeleted: r.is_deleted,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+        user: r.user
+          ? {
+              id: r.user.id.toString(),
+              nickname: r.user.nickname,
+              profileImg: r.user.profile_img,
+            }
+          : null,
+      })),
+    }));
+
+    return NextResponse.json({
+      success: true,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+      comments: formattedComments,
+    });
+  } catch (error) {
+    console.error("[GET /api/posts/[postId]/comments]", error);
+    return NextResponse.json(
+      { message: "댓글 조회 실패..." },
+      { status: 500 },
+    );
+  }
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ postId: string }> },

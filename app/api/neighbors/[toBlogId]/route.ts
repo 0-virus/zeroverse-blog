@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ toBlogId: string }> },
 ) {
   try {
@@ -125,5 +125,74 @@ export async function POST(
       );
     }
     return NextResponse.json({ message: "이웃 설정 실패..." }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ toBlogId: string }> },
+) {
+  try {
+    // 세션 데이터 불러오기
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { message: "로그인이 필요합니다." },
+        { status: 401 },
+      );
+    }
+
+    // Path Parameter 불러오기
+    const { toBlogId } = await params;
+    if (!toBlogId || isNaN(Number(toBlogId))) {
+      return NextResponse.json(
+        { message: "Path Parameter가 유효하지 않습니다." },
+        { status: 400 },
+      );
+    }
+
+    // 사용자 블로그 정보 불러오기
+    const fromBlog = await prisma.blogs.findUnique({
+      where: { user_id: BigInt(session.user.id) },
+      select: { id: true },
+    });
+    if (!fromBlog) {
+      return NextResponse.json(
+        { message: "사용자 블로그 정보가 없습니다." },
+        { status: 404 },
+      );
+    }
+
+    // 이웃 관계 존재 확인
+    const neighbor = await prisma.neighbors.findUnique({
+      where: {
+        unique_neighbor: {
+          from_blog_id: fromBlog.id,
+          to_blog_id: BigInt(toBlogId),
+        },
+      },
+    });
+    if (!neighbor) {
+      return NextResponse.json(
+        { message: "이웃 관계가 존재하지 않습니다." },
+        { status: 404 },
+      );
+    }
+
+    // 이웃 관계 삭제
+    await prisma.neighbors.delete({
+      where: { id: neighbor.id },
+    });
+
+    return NextResponse.json(
+      { message: "이웃 삭제 완료!" },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("[DELETE /api/neighbors]", error);
+    return NextResponse.json(
+      { message: "이웃 삭제 실패..." },
+      { status: 500 },
+    );
   }
 }
