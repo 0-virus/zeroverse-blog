@@ -4,10 +4,15 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      {/* 인증 페이지 공통 레이아웃: 중앙 정렬, 네비게이션 없음 */}
+    <div
+      className="min-h-screen flex flex-col items-center justify-center"
+      style={{
+        background:
+          "radial-gradient(farthest-corner at 10% 0%, var(--primary-light), #fffade 80%, var(--background) 100%)",
+      }}
+    >
       {children}
-      <footer>
+      <footer className="mt-8 text-xs text-muted">
         <p>Copyright &copy; ZV Corp. All Rights Reserved.</p>
       </footer>
     </div>
